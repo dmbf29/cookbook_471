@@ -23,19 +23,29 @@ class Cookbook
     save_csv
   end
 
+  def mark_as_done(index)
+    recipe = @recipes[index]
+    recipe.mark_as_done!
+    save_csv
+  end
+
   private
 
   def save_csv
     CSV.open(@csv_file_path, 'wb') do |csv|
+      csv << ['name', 'description', 'prep_time', 'rating', 'done']
       @recipes.each do |recipe|
-        csv << [recipe.name, recipe.description]
+        csv << [recipe.name, recipe.description, recipe.prep_time, recipe.rating, recipe.done?]
       end
     end
   end
 
   def load_csv
-    CSV.foreach(@csv_file_path) do |row|
-      @recipes << Recipe.new(row[0], row[1])
+    csv_options = { headers: :first_row, header_converters: :symbol }
+    CSV.foreach(@csv_file_path, csv_options) do |attributes|
+      # we need to update attributes[:done]
+      attributes[:done] = (attributes[:done] == 'true')
+      @recipes << Recipe.new(attributes)
     end
   end
 end
